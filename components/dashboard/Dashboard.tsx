@@ -2,8 +2,9 @@
 "use client";
 
 import { useState } from "react";
-
-import BoardModal from "@/components/boards/BoardModal";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import BoardModal from "../boards/BoardModal";
 
 type Board = {
   id: number;
@@ -14,19 +15,67 @@ type Board = {
 
 type DashboardProps = {
   boards: Board[];
+  userName: string;
+  userRole: "admin" | "member";
 };
 
 export default function Dashboard({
   boards,
+  userName,
+  userRole,
 }: DashboardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
 
-  function handleCreateBoard() {
+  function handleOpenCreateBoard() {
     setIsModalOpen(true);
   }
 
   function handleCloseModal() {
     setIsModalOpen(false);
+  }
+
+  async function handleCreateBoard(data: {
+    title: string;
+    description: string;
+  }) {
+    const supabase = createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      // console.error("Usuário não autenticado.");
+      return;
+    }
+
+    // console.log("CRIANDO BOARD COM:", {
+    //   userId: user.id,
+    //   title: data.title,
+    //   description: data.description,
+    // });
+
+    const { data: board, error } = await supabase
+      .from("boards")
+      .insert({
+        title: data.title,
+        description: data.description,
+        created_by: user.id,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      // console.error("ERRO COMPLETO AO CRIAR BOARD:", error);
+      return;
+    }
+
+    // console.log("BOARD CRIADO:", board);
+
+    setIsModalOpen(false);
+
+    router.refresh();
   }
 
   return (
@@ -47,7 +96,7 @@ export default function Dashboard({
               </button>
 
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 font-semibold text-emerald-700">
-                D
+                {userName.charAt(0).toUpperCase()}
               </div>
             </div>
           </div>
@@ -82,7 +131,7 @@ export default function Dashboard({
           <section className="flex-1 p-6 md:p-10">
             <div className="mb-10">
               <h2 className="text-2xl font-bold text-slate-900">
-                Olá, Deborah 👋
+                Olá, {userName}
               </h2>
 
               <p className="mt-2 text-slate-500">
@@ -96,13 +145,15 @@ export default function Dashboard({
                   Seus quadros
                 </h3>
 
-                <button
-                  type="button"
-                  onClick={handleCreateBoard}
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
-                >
-                  + Novo quadro
-                </button>
+                {userRole === "admin" && (
+                  <button
+                    type="button"
+                    onClick={handleOpenCreateBoard}
+                    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                  >
+                    + Novo quadro
+                  </button>
+                )}
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -126,21 +177,23 @@ export default function Dashboard({
                   </a>
                 ))}
 
-                <button
-                  type="button"
-                  onClick={handleCreateBoard}
-                  className="flex min-h-[170px] items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-transparent p-6 text-center transition hover:border-emerald-400 hover:bg-emerald-50"
-                >
-                  <div>
-                    <span className="text-2xl text-emerald-600">
-                      +
-                    </span>
+                {userRole === "admin" && (
+                  <button
+                    type="button"
+                    onClick={handleOpenCreateBoard}
+                    className="flex min-h-[170px] items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-transparent p-6 text-center transition hover:border-emerald-400 hover:bg-emerald-50"
+                  >
+                    <div>
+                      <span className="text-2xl text-emerald-600">
+                        +
+                      </span>
 
-                    <p className="mt-2 text-sm font-semibold text-slate-600">
-                      Criar novo quadro
-                    </p>
-                  </div>
-                </button>
+                      <p className="mt-2 text-sm font-semibold text-slate-600">
+                        Criar novo quadro
+                      </p>
+                    </div>
+                  </button>
+                )}
               </div>
             </div>
           </section>
@@ -148,7 +201,10 @@ export default function Dashboard({
       </main>
 
       {isModalOpen && (
-        <BoardModal onClose={handleCloseModal} />
+        <BoardModal
+          onClose={handleCloseModal}
+          onSubmit={handleCreateBoard}
+        />
       )}
     </>
   );

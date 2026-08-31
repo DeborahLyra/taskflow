@@ -1,22 +1,67 @@
 
 import Dashboard from "@/components/dashboard/Dashboard";
+import { createClient } from "@/lib/supabase/server";
 
-const boards = [
-  {
-    id: 1,
-    title: "Conteúdo",
-    description: "Organização das tarefas de conteúdo.",
-    tasks: 8,
-  },
-  {
-    id: 2,
-    title: "Eventos",
-    description: "Planejamento e organização de eventos.",
-    tasks: 12,
-  },
-];
+export default async function DashboardPage() {
+  const supabase = await createClient();
 
-export default function DashboardPage() {
-  return <Dashboard boards={boards} />;
-}
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  
+  console.log("USER DO SUPABASE:", user);
+  
+  const { data: adminTest, error: adminError } =
+    await supabase.rpc("is_admin");
+  
+  console.log("ADMIN TEST:", adminTest);
+  console.log("ADMIN ERROR:", adminError);
+  console.log("USER DO SUPABASE:", user);
+  
+  if (!user) {
+    return null;
+  }
+  
+  const {
+    data: profile,
+    error: profileError,
+  } = await supabase
+    .from("profiles")
+    .select("name, role")
+    .eq("id", user.id)
+    .single();
+  
+  console.log("PROFILE:", profile);
+  console.log("PROFILE ERROR:", profileError);
+    
+    const { data: boards, error } = await supabase
+    .from("boards")
+    .select(`
+      id,
+      title,
+      description
+    `)
+    .order("created_at", {
+      ascending: false,
+    });
 
+  if (error) {
+    console.error("Erro ao buscar boards:", error);
+  }
+
+  const formattedBoards = (boards ?? []).map((board) => ({
+    id: board.id,
+    title: board.title,
+    description: board.description ?? "",
+    tasks: 0,
+  }));
+
+  return (
+    <Dashboard
+      boards={formattedBoards}
+      userName={profile?.name ?? "Usuário"}
+      userRole={profile?.role ?? "member"}
+    />
+  );
+
+  }

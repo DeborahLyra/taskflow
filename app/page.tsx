@@ -1,38 +1,32 @@
 
+import LoginForm from "@/components/auth/LoginForm";
+
 export default function Home() {
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      <section className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
-        <div className="mb-8">
-          <span className="text-3xl font-bold tracking-tight text-emerald-600">
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+      <div className="w-full max-w-md">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-emerald-600">
             TaskFlow
-          </span>
-        </div>
-
-        <div className="max-w-2xl">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-            Organize seus projetos.
-            <span className="block text-emerald-600">
-              Conquiste seus objetivos.
-            </span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-slate-600">
-            Um espaço simples e organizado para planejar tarefas,
-            acompanhar projetos e trabalhar em equipe.
+          <p className="mt-2 text-slate-500">
+            Organização de projetos e tarefas
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <h2 className="text-xl font-bold text-slate-900">
+            Entrar
+          </h2>
+
+          <p className="mt-1 mb-6 text-sm text-slate-500">
+            Acesse sua conta para continuar.
           </p>
 
-          <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
-            <button className="rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white transition hover:bg-emerald-700">
-              Entrar
-            </button>
-
-            <button className="rounded-lg border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-100">
-              Criar conta
-            </button>
-          </div>
+          <LoginForm />
         </div>
-      </section>
+      </div>
     </main>
   );
 }

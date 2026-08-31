@@ -12,25 +12,32 @@ type Board = {
 type BoardModalProps = {
   board?: Board | null;
   onClose: () => void;
+  onSubmit: (data: {
+    title: string;
+    description: string;
+  }) => Promise<void>;
 };
 
 export default function BoardModal({
   board,
   onClose,
+  onSubmit,
 }: BoardModalProps) {
   const [title, setTitle] = useState(board?.title ?? "");
   const [description, setDescription] = useState(
     board?.description ?? "",
   );
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault();
-
-    console.log({
+  
+    await onSubmit({
       title,
       description,
     });
-
+  
     onClose();
   }
 
