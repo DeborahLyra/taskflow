@@ -1,6 +1,3 @@
-
-import TaskCard from "./TaskCard";
-
 type Task = {
   id: number;
   title: string;
@@ -8,58 +5,65 @@ type Task = {
   dueDate?: string;
 };
 
-type BoardColumnProps = {
+type Column = {
+  id: number;
   title: string;
   tasks: Task[];
-  onTaskClick: (task: Task) => void;
+};
+
+type BoardColumnProps = {
+  column: Column;
   onAddTask: () => void;
 };
 
 export default function BoardColumn({
-  title,
-  tasks,
-  onTaskClick,
+  column,
   onAddTask,
 }: BoardColumnProps) {
   return (
-    <div className="flex w-80 flex-col rounded-xl bg-slate-200/70 p-3">
-      <div className="mb-3 flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">
-            {title}
-          </h2>
+    <div className="w-80 shrink-0 rounded-2xl bg-slate-200/70 p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="font-semibold text-slate-800">
+          {column.title}
+        </h2>
 
-          <span className="rounded-full bg-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-600">
-            {tasks.length}
-          </span>
-        </div>
-
-        <button
-          type="button"
-          className="rounded-md px-2 py-1 text-slate-500 transition hover:bg-slate-300"
-        >
-          ⋯
-        </button>
+        <span className="text-sm text-slate-500">
+          {column.tasks.length}
+        </span>
       </div>
 
       <div className="space-y-3">
-        {tasks.map((task) => (
-          <TaskCard
+        {column.tasks.map((task) => (
+          <div
             key={task.id}
-            task={task}
-            onClick={() => onTaskClick(task)}
-          />
+            className="rounded-xl bg-white p-4 shadow-sm"
+          >
+            <h3 className="font-medium text-slate-900">
+              {task.title}
+            </h3>
+
+            {task.description && (
+              <p className="mt-2 text-sm text-slate-500">
+                {task.description}
+              </p>
+            )}
+
+            {task.dueDate && (
+              <p className="mt-3 text-xs text-slate-400">
+                Prazo: {task.dueDate}
+              </p>
+            )}
+          </div>
         ))}
       </div>
 
       <button
         type="button"
         onClick={onAddTask}
-        className="mt-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-500 transition hover:bg-slate-300 hover:text-slate-700"
+        className="mt-4 w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-600 transition hover:bg-slate-300/70 hover:text-slate-900"
       >
         + Adicionar tarefa
       </button>
     </div>
   );
 }
-

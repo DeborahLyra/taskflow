@@ -1,136 +1,154 @@
-
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 
-type Task = {
-  id: number;
-  title: string;
-  description: string;
-  dueDate?: string;
-};
+import { createClient } from "@/lib/supabase/client";
 
 type TaskModalProps = {
-  task?: Task | null;
+  columnId: number;
   onClose: () => void;
 };
 
 export default function TaskModal({
-  task,
+  columnId,
   onClose,
 }: TaskModalProps) {
-  const [title, setTitle] = useState(task?.title ?? "");
-  const [description, setDescription] = useState(
-    task?.description ?? "",
-  );
-  const [dueDate, setDueDate] = useState(task?.dueDate ?? "");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const router = useRouter();
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    console.log({
-      title,
-      description,
-      dueDate,
+    if (!title.trim()) {
+      setErrorMessage("Digite o título da tarefa.");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage("");
+
+    const supabase = createClient();
+
+    const { error } = await supabase.from("tasks").insert({
+      column_id: columnId,
+      title: title.trim(),
+      description: description.trim() || null,
+      due_date: dueDate || null,
+      position: 0,
     });
 
+    if (error) {
+      console.error("Erro ao criar tarefa:", error);
+
+      setErrorMessage("Não foi possível criar a tarefa.");
+      setLoading(false);
+
+      return;
+    }
+
+    router.refresh();
     onClose();
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">
-              {task ? "Editar tarefa" : "Nova tarefa"}
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-              {task
-                ? "Atualize as informações da tarefa."
-                : "Adicione uma nova tarefa ao seu board."}
-            </p>
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-slate-900">
+            Nova tarefa
+          </h2>
 
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-3 py-2 text-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-            aria-label="Fechar"
+            className="text-xl text-slate-400 transition hover:text-slate-700"
           >
             ×
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5 p-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
-              htmlFor="task-title"
-              className="mb-2 block text-sm font-medium text-slate-700"
+              htmlFor="title"
+              className="mb-1 block text-sm font-medium text-slate-700"
             >
               Título
             </label>
 
             <input
-              id="task-title"
+              id="title"
+              type="text"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="Ex.: Criar publicação"
-              required
-              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+              placeholder="Ex: Criar post para Instagram"
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-emerald-500"
             />
           </div>
 
           <div>
             <label
-              htmlFor="task-description"
-              className="mb-2 block text-sm font-medium text-slate-700"
+              htmlFor="description"
+              className="mb-1 block text-sm font-medium text-slate-700"
             >
               Descrição
             </label>
 
             <textarea
-              id="task-description"
+              id="description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder="Descreva a tarefa..."
               rows={4}
-              className="w-full resize-none rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+              className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-emerald-500"
             />
           </div>
 
           <div>
             <label
-              htmlFor="task-due-date"
-              className="mb-2 block text-sm font-medium text-slate-700"
+              htmlFor="dueDate"
+              className="mb-1 block text-sm font-medium text-slate-700"
             >
               Prazo
             </label>
 
             <input
-              id="task-due-date"
+              id="dueDate"
               type="date"
               value={dueDate}
               onChange={(event) => setDueDate(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-emerald-500"
             />
           </div>
+
+          {errorMessage && (
+            <p className="text-sm text-red-500">
+              {errorMessage}
+            </p>
+          )}
 
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              disabled={loading}
+              className="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
             >
               Cancelar
             </button>
 
             <button
               type="submit"
-              className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+              disabled={loading}
+              className="rounded-xl bg-emerald-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Salvar
+              {loading ? "Criando..." : "Criar tarefa"}
             </button>
           </div>
         </form>
@@ -138,4 +156,3 @@ export default function TaskModal({
     </div>
   );
 }
-

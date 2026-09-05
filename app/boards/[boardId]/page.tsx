@@ -1,83 +1,86 @@
+import { notFound } from "next/navigation";
 
 import Board from "@/components/boards/Board";
 import BoardHeader from "@/components/boards/BoardHeader";
+import { createClient } from "@/lib/supabase/server";
 
-type Task = {
-    id: number;
-    title: string;
-    description: string;
-    dueDate?: string;
+type Column = {
+  id: number;
+  title: string;
+  position: number;
 };
-
-type BoardColumnData = {
-    id: number;
-    title: string;
-    tasks: Task[];
-};
-
-const columns: BoardColumnData[] = [
-    {
-        id: 1,
-        title: "A fazer",
-        tasks: [
-            {
-                id: 1,
-                title: "Criar publicação",
-                description: "Preparar o conteúdo para a próxima publicação.",
-                dueDate: "30/08",
-            },
-            {
-                id: 2,
-                title: "Revisar calendário",
-                description: "Verificar as próximas publicações.",
-                dueDate: "31/08",
-            },
-        ],
-    },
-    {
-        id: 2,
-        title: "Em andamento",
-        tasks: [
-            {
-                id: 3,
-                title: "Arte do evento",
-                description: "Finalizar a arte para divulgação.",
-                dueDate: "29/08",
-            },
-        ],
-    },
-    {
-        id: 3,
-        title: "Concluído",
-        tasks: [
-            {
-                id: 4,
-                title: "Post de domingo",
-                description: "Publicação finalizada.",
-                dueDate: "25/08",
-            },
-        ],
-    },
-];
 
 export default async function BoardPage({
-    params,
+  params,
 }: {
-    params: Promise<{ boardId: string }>;
+  params: Promise<{ boardId: string }>;
 }) {
-    const { boardId } = await params;
+  const { boardId } = await params;
 
-    console.log("Board:", boardId);
+  const supabase = await createClient();
 
-    return (
-        <main className="min-h-screen bg-slate-100">
-            <BoardHeader
-                title="Conteúdo"
-                description="Organização das tarefas de conteúdo"
-            />
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-            <Board columns={columns} />
-        </main>
-    );
+  if (!user) {
+    notFound();
+  }
+
+  const { data: board, error: boardError } = await supabase
+    .from("boards")
+    .select("id, title, description")
+    .eq("id", boardId)
+    .single();
+
+  if (boardError || !board) {
+    notFound();
+  }
+
+  const { data: columns, error: columnsError } = await supabase
+  .from("columns")
+  .select(`
+    id,
+    title,
+    position,
+    tasks (
+      id,
+      title,
+      description,
+      due_date,
+      assigned_to,
+      position
+    )
+  `)
+  .eq("board_id", boardId)
+  .order("position", { ascending: true });
+  if (columnsError) {
+    console.error("Erro ao buscar colunas:", columnsError);
+  }
+
+  const formattedColumns =
+  columns?.map((column) => ({
+    id: column.id,
+    title: column.title,
+    tasks:
+      column.tasks
+        ?.sort((a, b) => a.position - b.position)
+        .map((task) => ({
+          id: task.id,
+          title: task.title,
+          description: task.description ?? "",
+          dueDate: task.due_date ?? undefined,
+        })) ?? [],
+  })) ?? [];
+
+  return (
+    <main className="min-h-screen bg-slate-100">
+      <BoardHeader
+        title={board.title}
+        description={board.description ?? ""}
+      />
+
+      <Board columns={formattedColumns} />
+    </main>
+  );
 }
-
