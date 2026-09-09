@@ -12,7 +12,14 @@ export default function TaskCard({
   return (
     <article
       onClick={onClick}
+      draggable
       className="cursor-pointer rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      onDragStart={(event) => {
+        event.dataTransfer.setData(
+          "taskId",
+          String(task.id)
+        );
+      }}
     >
       <h3 className="font-semibold text-slate-800">
         {task.title}

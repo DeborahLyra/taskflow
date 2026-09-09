@@ -11,15 +11,36 @@ type BoardColumnProps = {
   column: Column;
   onAddTask: () => void;
   onEditTask: (task: Task) => void;
+  onMoveTask: (
+    taskId: number,
+    columnId: number
+  ) => void;
 };
 
 export default function BoardColumn({
   column,
   onAddTask,
   onEditTask,
+  onMoveTask,
 }: BoardColumnProps) {
   return (
-    <div className="w-80 shrink-0 rounded-2xl bg-slate-200/70 p-4">
+    <div
+      className="w-80 shrink-0 rounded-2xl bg-slate-200/70 p-4"
+      onDragOver={(event) => {
+        event.preventDefault();
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+
+        const taskId = Number(
+          event.dataTransfer.getData("taskId")
+        );
+
+        if (!taskId) return;
+
+        onMoveTask(taskId, column.id);
+    }}
+    >
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-semibold text-slate-800">
           {column.title}
