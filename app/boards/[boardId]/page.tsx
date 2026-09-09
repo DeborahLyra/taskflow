@@ -70,6 +70,7 @@ export default async function BoardPage({
           title: task.title,
           description: task.description ?? "",
           dueDate: task.due_date ?? undefined,
+          columnId: column.id,
         })) ?? [],
   })) ?? [];
 

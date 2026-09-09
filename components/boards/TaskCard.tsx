@@ -1,10 +1,4 @@
-
-type Task = {
-  id: number;
-  title: string;
-  description: string;
-  dueDate?: string;
-};
+import type { Task } from "./Board";
 
 type TaskCardProps = {
   task: Task;
@@ -24,9 +18,11 @@ export default function TaskCard({
         {task.title}
       </h3>
 
-      <p className="mt-2 text-sm leading-5 text-slate-500">
-        {task.description}
-      </p>
+      {task.description && (
+        <p className="mt-2 text-sm leading-5 text-slate-500">
+          {task.description}
+        </p>
+      )}
 
       {task.dueDate && (
         <div className="mt-4 flex items-center gap-1.5 text-xs font-medium text-slate-500">
@@ -37,4 +33,3 @@ export default function TaskCard({
     </article>
   );
 }
-

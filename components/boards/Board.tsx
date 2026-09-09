@@ -4,12 +4,14 @@ import { useState } from "react";
 
 import BoardColumn from "./BoardColumn";
 import TaskModal from "./TaskModal";
+import EditTaskModal from "./EditTaskModal";
 
-type Task = {
+export type Task = {
   id: number;
   title: string;
   description: string;
   dueDate?: string;
+  columnId: number;
 };
 
 type Column = {
@@ -26,12 +28,23 @@ export default function Board({ columns }: BoardProps) {
   const [selectedColumnId, setSelectedColumnId] =
     useState<number | null>(null);
 
+  const [selectedTask, setSelectedTask] =
+    useState<Task | null>(null);
+
   function handleAddTask(columnId: number) {
     setSelectedColumnId(columnId);
   }
 
+  function handleEditTask(task: Task) {
+    setSelectedTask(task);
+  }
+
   function handleCloseTaskModal() {
     setSelectedColumnId(null);
+  }
+
+  function handleCloseEditModal() {
+    setSelectedTask(null);
   }
 
   return (
@@ -42,6 +55,7 @@ export default function Board({ columns }: BoardProps) {
             key={column.id}
             column={column}
             onAddTask={() => handleAddTask(column.id)}
+            onEditTask={handleEditTask}
           />
         ))}
       </div>
@@ -50,6 +64,14 @@ export default function Board({ columns }: BoardProps) {
         <TaskModal
           columnId={selectedColumnId}
           onClose={handleCloseTaskModal}
+        />
+      )}
+
+      {selectedTask && (
+        <EditTaskModal
+          task={selectedTask}
+          columns={columns}
+          onClose={handleCloseEditModal}
         />
       )}
     </>
