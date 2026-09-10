@@ -14,6 +14,7 @@ export type Task = {
   description: string;
   dueDate?: string;
   columnId: number;
+  position: number;
 };
 
 type Column = {
@@ -111,6 +112,111 @@ export default function Board({ columns }: BoardProps) {
     }
   }
 
+  async function handleReorderTask(
+    draggedTaskId: number,
+    targetTaskId: number,
+    columnId: number
+  ) {
+    if (draggedTaskId === targetTaskId) {
+      return;
+    }
+  
+    const column = localColumns.find(
+      (column) => column.id === columnId
+    );
+  
+    if (!column) return;
+  
+    const draggedTask = localColumns
+      .flatMap((column) => column.tasks)
+      .find((task) => task.id === draggedTaskId);
+  
+    if (!draggedTask) return;
+  
+    if (draggedTask.columnId !== columnId) {
+      await handleMoveTask(
+        draggedTaskId,
+        columnId
+      );
+  
+      return;
+    }
+  
+    const previousColumns = localColumns;
+  
+    const tasks = [...column.tasks];
+  
+    const draggedIndex = tasks.findIndex(
+      (task) => task.id === draggedTaskId
+    );
+  
+    const targetIndex = tasks.findIndex(
+      (task) => task.id === targetTaskId
+    );
+  
+    if (
+      draggedIndex === -1 ||
+      targetIndex === -1
+    ) {
+      return;
+    }
+  
+    const [removedTask] = tasks.splice(
+      draggedIndex,
+      1
+    );
+  
+    tasks.splice(
+      targetIndex,
+      0,
+      removedTask
+    );
+  
+    const reorderedTasks = tasks.map(
+      (task, index) => ({
+        ...task,
+        position: index,
+      })
+    );
+  
+    setLocalColumns((currentColumns) =>
+      currentColumns.map((currentColumn) =>
+        currentColumn.id === columnId
+          ? {
+              ...currentColumn,
+              tasks: reorderedTasks,
+            }
+          : currentColumn
+      )
+    );
+  
+    const supabase = createClient();
+  
+    const updates = reorderedTasks.map(
+      (task) =>
+        supabase
+          .from("tasks")
+          .update({
+            position: task.position,
+          })
+          .eq("id", task.id)
+    );
+  
+    const results = await Promise.all(updates);
+  
+    const hasError = results.some(
+      (result) => result.error
+    );
+  
+    if (hasError) {
+      console.error(
+        "Erro ao salvar a ordem das tarefas."
+      );
+  
+      setLocalColumns(previousColumns);
+    }
+  }
+
   return (
     <>
       <div className="flex gap-4 overflow-x-auto p-6">
@@ -121,6 +227,7 @@ export default function Board({ columns }: BoardProps) {
             onAddTask={() => handleAddTask(column.id)}
             onEditTask={handleEditTask}
             onMoveTask={handleMoveTask}
+            onReorderTask={handleReorderTask}
           />
         ))}
       </div>

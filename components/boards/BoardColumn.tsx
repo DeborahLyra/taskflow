@@ -15,6 +15,11 @@ type BoardColumnProps = {
     taskId: number,
     columnId: number
   ) => void;
+  onReorderTask: (
+    draggedTaskId: number,
+    targetTaskId: number,
+    columnId: number
+  ) => void;
 };
 
 export default function BoardColumn({
@@ -22,6 +27,7 @@ export default function BoardColumn({
   onAddTask,
   onEditTask,
   onMoveTask,
+  onReorderTask,
 }: BoardColumnProps) {
   return (
     <div
@@ -54,9 +60,16 @@ export default function BoardColumn({
       <div className="space-y-3">
         {column.tasks.map((task) => (
           <TaskCard
-            key={task.id}
-            task={task}
-            onClick={() => onEditTask(task)}
+          key={task.id}
+          task={task}
+          onClick={() => onEditTask(task)}
+          onDropTask={(draggedTaskId, targetTaskId) =>
+            onReorderTask(
+              draggedTaskId,
+              targetTaskId,
+              column.id
+            )
+          }
           />
         ))}
       </div>
